@@ -7,7 +7,6 @@ bundle:
 variables:
   catalog_name:
     default: bfsi_lakehouse
-  warehouse_id:
     description: "SQL Warehouse ID for running SQL tasks"
 
 resources:
