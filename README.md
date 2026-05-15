@@ -129,4 +129,3 @@ autoloader_streaming
 
 ## Author
 
-Built as a hands-on companion to the Databricks Certified Data Engineer Associate certification.
