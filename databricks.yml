@@ -61,6 +61,8 @@ targets:
   dev:
     default: true
     mode: development
+    presets:
+      trigger_pause_status: UNPAUSED
     workspace:
       host: https://dbc-766279b4-b2f3.cloud.databricks.com/  # Replace with your actual workspace URL
 
