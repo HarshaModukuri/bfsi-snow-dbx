@@ -1,0 +1,80 @@
+# .github/workflows/deploy.yml
+# CI/CD Pipeline for BFSI Lakehouse Pipeline
+# Validates, deploys, and optionally runs the Databricks bundle
+
+name: Deploy BFSI Lakehouse Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+  DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
+jobs:
+  # Job 1: Validate bundle on every push/PR
+  validate:
+    name: Validate Bundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Databricks CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+
+      - name: Validate bundle configuration
+        run: |
+          databricks bundle validate -t dev
+
+  # Job 2: Deploy to dev on push to main
+  deploy-dev:
+    name: Deploy to Dev
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Databricks CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+
+      - name: Deploy bundle to dev
+        run: |
+          databricks bundle deploy -t dev
+
+      - name: Run pipeline (optional — uncomment to auto-run)
+        run: |
+          echo "Bundle deployed successfully to dev target."
+          echo "To run: databricks bundle run -t dev bfsi_etl_pipeline"
+          # Uncomment the line below to auto-trigger the pipeline after deploy:
+          # databricks bundle run -t dev bfsi_etl_pipeline
+
+  # Job 3: Deploy to prod (manual trigger via workflow_dispatch)
+  deploy-prod:
+    name: Deploy to Production
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Databricks CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+
+      - name: Deploy bundle to prod
+        run: |
+          databricks bundle deploy -t prod
+
+      - name: Run production pipeline
+        run: |
+          databricks bundle run -t prod bfsi_etl_pipeline
