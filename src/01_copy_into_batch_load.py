@@ -70,7 +70,16 @@
 # MAGIC COPY INTO bfsi_lakehouse.bronze.transactions_batch
 # MAGIC FROM (
 # MAGIC     SELECT 
-# MAGIC         *,
+# MAGIC         transaction_id,
+# MAGIC         account_id,
+# MAGIC         CAST(transaction_date AS TIMESTAMP) AS transaction_date,
+# MAGIC         amount,
+# MAGIC         transaction_type,
+# MAGIC         category,
+# MAGIC         merchant_name,
+# MAGIC         channel,
+# MAGIC         status,
+# MAGIC         reference_number,
 # MAGIC         current_timestamp() AS _ingested_at,
 # MAGIC         _metadata.file_path AS _source_file
 # MAGIC     FROM '/Volumes/bfsi_lakehouse/bronze/raw_files/transactions/'
