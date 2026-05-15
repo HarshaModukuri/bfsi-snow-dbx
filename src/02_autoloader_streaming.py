@@ -18,10 +18,6 @@
 
 # COMMAND ----------
 
-# Auto Loader: Stream new JSON files into Bronze
-# format("cloudFiles") = Auto Loader
-# cloudFiles.format = the actual file format (json)
-
 source_path = "/Volumes/bfsi_lakehouse/bronze/raw_files/transactions/"
 checkpoint_path = "/Volumes/bfsi_lakehouse/bronze/raw_files/_checkpoints/autoloader_txn"
 target_table = "bfsi_lakehouse.bronze.transactions_streaming"
@@ -37,25 +33,21 @@ df_stream = (
 
 # COMMAND ----------
 
-# Add ingestion metadata columns
-from pyspark.sql.functions import current_timestamp, input_file_name
+from pyspark.sql.functions import current_timestamp, col
 
 df_enriched = (
     df_stream
     .withColumn("_ingested_at", current_timestamp())
-    .withColumn("_source_file", input_file_name())
+    .withColumn("_source_file", col("_metadata.file_path"))
 )
 
 # COMMAND ----------
-
-# Write stream using trigger(availableNow=True)
-# This processes all available files then STOPS — ideal for scheduled batch
-# On serverless compute, this is the recommended trigger mode
 
 (
     df_enriched.writeStream
     .format("delta")
     .option("checkpointLocation", checkpoint_path)
+    .option("mergeSchema", "true")
     .trigger(availableNow=True)
     .toTable(target_table)
 )
