@@ -60,7 +60,6 @@ resources:
 targets:
   dev:
     default: true
-    mode: development
     presets:
       trigger_pause_status: UNPAUSED
     workspace:
