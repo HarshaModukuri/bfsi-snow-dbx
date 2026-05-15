@@ -1,0 +1,70 @@
+# databricks.yml — Declarative Automation Bundle Configuration
+# Formerly known as Databricks Asset Bundles (DABs)
+
+bundle:
+  name: bfsi-lakehouse-pipeline
+
+variables:
+  catalog_name:
+    default: bfsi_lakehouse
+  warehouse_id:
+    description: "SQL Warehouse ID for running SQL tasks"
+
+resources:
+  jobs:
+    bfsi_etl_pipeline:
+      name: "${bundle.target}-bfsi-etl-pipeline"
+      description: "End-to-end BFSI Lakehouse Pipeline: Bronze → Silver → Gold"
+
+      # Job-level parameters
+      parameters:
+        - name: catalog
+          default: ${var.catalog_name}
+
+      tasks:
+        # Task 1: COPY INTO — Batch load historical files
+        - task_key: batch_load_copy_into
+          description: "Load historical JSON files using COPY INTO"
+          notebook_task:
+            notebook_path: ./src/01_copy_into_batch_load.py
+          # On Free Edition, serverless is the only compute
+
+        # Task 2: Auto Loader — Stream new files
+        - task_key: autoloader_streaming
+          description: "Ingest new JSON files using Auto Loader"
+          depends_on:
+            - task_key: batch_load_copy_into
+          notebook_task:
+            notebook_path: ./src/02_autoloader_streaming.py
+
+        # Task 3: Silver — Cleanse and deduplicate
+        - task_key: silver_transform
+          description: "Cleanse, deduplicate, enrich into Silver layer"
+          depends_on:
+            - task_key: autoloader_streaming
+          notebook_task:
+            notebook_path: ./src/03_silver_transform.py
+
+        # Task 4: Gold — Create aggregates
+        - task_key: gold_aggregates
+          description: "Build Gold layer business aggregates"
+          depends_on:
+            - task_key: silver_transform
+          notebook_task:
+            notebook_path: ./src/04_gold_aggregates.py
+
+targets:
+  dev:
+    default: true
+    mode: development
+    workspace:
+      host: https://dbc-766279b4-b2f3.cloud.databricks.com/  # Replace with your actual workspace URL
+
+  prod:
+    mode: production
+    workspace:
+      host: https://dbc-766279b4-b2f3.cloud.databricks.com/  # Replace with your actual workspace URL
+    run_as:
+      # For prod, use a service principal (if available)
+      # service_principal_name: "bfsi-pipeline-sp"
+      user_name: harshamodhukuri@gmail.com  # Replace with your Databricks email
