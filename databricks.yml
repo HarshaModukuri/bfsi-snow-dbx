@@ -17,7 +17,7 @@ resources:
         file_arrival:
           url: /Volumes/bfsi_lakehouse/bronze/raw_files/transactions/
           min_time_between_triggers_seconds: 60
-          wait_after_last_change_seconds: 30
+          wait_after_last_change_seconds: 61
       description: "End-to-end BFSI Lakehouse Pipeline: Bronze → Silver → Gold"
 
       # Job-level parameters
